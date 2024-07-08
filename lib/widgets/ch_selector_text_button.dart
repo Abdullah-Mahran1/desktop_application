@@ -1,26 +1,34 @@
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/cubits/ch_selector_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChSelectorTextButton extends StatelessWidget {
   const ChSelectorTextButton(
       {super.key,
       required this.color,
-      required this.title,
-      required this.isSelected,
-      required this.onPressed});
+      required this.index,
+      required this.isSelected});
   final Color color;
-  final String title;
+  final int index;
   final bool isSelected;
-  final Function() onPressed;
+
   @override
   Widget build(BuildContext context) {
     return TextButton(
         style: TextButton.styleFrom(
-          overlayColor: const Color(highlightColor),
-          foregroundColor: const Color(blackColor),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: onPressed,
+            overlayColor: const Color(highlightColor),
+            foregroundColor: const Color(blackColor),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+        onPressed: () {
+          BlocProvider.of<ChSelectorCubit>(context).selectedChannels[index] =
+              !BlocProvider.of<ChSelectorCubit>(context)
+                  .selectedChannels[index];
+          BlocProvider.of<ChSelectorCubit>(context).updateChannels();
+          debugPrint(
+              'Selected channels are now ${BlocProvider.of<ChSelectorCubit>(context).selectedChannels}');
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Center(
@@ -31,7 +39,7 @@ class ChSelectorTextButton extends StatelessWidget {
                 size: 20,
               ),
               Text(
-                title,
+                ' Ch$index',
                 style: TextStyle(fontSize: 16, color: Color(blackColor)),
               )
             ]),

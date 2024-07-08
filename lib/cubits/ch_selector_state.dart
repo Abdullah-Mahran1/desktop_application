@@ -5,6 +5,8 @@ sealed class ChSelectorState {}
 
 final class ChSelectorInitial extends ChSelectorState {}
 
+final class ChSelectorUpdated extends ChSelectorState {}
+
 
 
 /*

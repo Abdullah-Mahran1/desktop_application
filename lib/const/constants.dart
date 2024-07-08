@@ -14,5 +14,5 @@ const int ch3Color = 0xFFF0E600;
 const double defaultPadding = 20.0;
 
 //  Global Variables:
-int selectedSideMenuItem = 0;
-List selectedChannels = [true, true, false, false];
+// int selectedSideMenuItem = 0;
+List<bool> selectedChannels = [true, true, false, false];

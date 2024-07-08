@@ -15,7 +15,8 @@ class NavigatorTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
       width: double.maxFinite,
       child: TextButton(
           style: TextButton.styleFrom(
