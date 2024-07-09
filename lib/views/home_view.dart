@@ -1,6 +1,7 @@
 import 'package:desktop_application/const/constants.dart';
 import 'package:desktop_application/cubits/ch_selector_cubit.dart';
 import 'package:desktop_application/cubits/cubit/side_buttons_cubit.dart';
+import 'package:desktop_application/data_handling/data_reading.dart';
 import 'package:desktop_application/data_handling/data_representing.dart';
 import 'package:desktop_application/widgets/ch_selector_text_button.dart';
 import 'package:desktop_application/widgets/navigator_text_button.dart';
@@ -17,7 +18,8 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    func1();
+    // func1();
+    readDataContinuously();
     return Scaffold(
         body: BlocProvider(
       create: (context) => SideButtonsCubit(),

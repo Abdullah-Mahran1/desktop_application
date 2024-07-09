@@ -13,6 +13,10 @@ const int ch3Color = 0xFFF0E600;
 
 const double defaultPadding = 20.0;
 
+const String serverIpAdrs = '192.168.1.20';
+const int serverPortNo = 502;
+
+const int readingDelay = 1; // one millisecound per reading
 //  Global Variables:
 // int selectedSideMenuItem = 0;
 List<bool> selectedChannels = [true, true, false, false];
