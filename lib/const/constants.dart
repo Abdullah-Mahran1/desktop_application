@@ -15,8 +15,28 @@ const double defaultPadding = 20.0;
 
 const String serverIpAdrs = '192.168.1.20';
 const int serverPortNo = 502;
+const int deviceId = 1;
+List<int> chAddresses = [30001, 30101, 30201, 30301]; //addresses of ch0 to ch3
+int readingBuffer =
+    10; // number of elements to accumulate before storing to excel file, production version can have value of 50
 
-const int readingDelay = 1; // one millisecound per reading
+const int serverReadingDelay = 2000; // one millisecound per reading
 //  Global Variables:
 // int selectedSideMenuItem = 0;
 List<bool> selectedChannels = [true, true, false, false];
+
+enum GraphXView {
+  MINUTE,
+  HOUR,
+  SIX_HOURS,
+  DAY,
+  SIX_DAYS,
+  // minutes([1, 2, 3]),
+  // hours([1, 2, 3]),
+  // days([1, 2, 3]);
+
+  // final List<int> data;
+  // const GraphXView(this.data);
+}
+
+GraphXView currentXView = GraphXView.MINUTE;

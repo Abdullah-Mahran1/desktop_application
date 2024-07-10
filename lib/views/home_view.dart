@@ -1,25 +1,29 @@
 import 'package:desktop_application/const/constants.dart';
 import 'package:desktop_application/cubits/ch_selector_cubit.dart';
 import 'package:desktop_application/cubits/cubit/side_buttons_cubit.dart';
-import 'package:desktop_application/data_handling/data_reading.dart';
-import 'package:desktop_application/data_handling/data_representing.dart';
+import 'package:desktop_application/data_handling/graph_data_processing.dart';
+import 'package:desktop_application/data_handling/server_communication.dart';
+import 'package:desktop_application/data_handling/csv_communication.dart';
 import 'package:desktop_application/widgets/ch_selector_text_button.dart';
+import 'package:desktop_application/widgets/line_chart.dart';
 import 'package:desktop_application/widgets/navigator_text_button.dart';
 import 'package:desktop_application/widgets/side_menu.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeView extends StatelessWidget {
-  void func1() async {
-    await readExcelData('assets/data/file.csv');
-  }
-
   HomeView({super.key});
+
+  Future<List<FlSpot>> loadData() async {
+    // You can call your async functions here
+    // await func1();
+    readFromDeviceLoop();
+    return await loadGraphData();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // func1();
-    readDataContinuously();
     return Scaffold(
         body: BlocProvider(
       create: (context) => SideButtonsCubit(),
@@ -36,19 +40,35 @@ class HomeView extends StatelessWidget {
                       child: SideMenu()),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 flex: 3,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: defaultPadding),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: defaultPadding),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: defaultPadding),
-                        Text('Wise 750 Dashboard',
+                        const SizedBox(height: defaultPadding),
+                        const Text('Wise 750 Dashboard',
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
-                        SizedBox(height: defaultPadding),
-                        ChSelectorPanel()
+                        const SizedBox(height: defaultPadding),
+                        const ChSelectorPanel(),
+                        const SizedBox(height: defaultPadding),
+                        FutureBuilder<List<FlSpot>>(
+                          future: loadData(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                  child: Text('Error: ${snapshot.error}'));
+                            } else {
+                              return MyLineChart(data: snapshot.data!);
+                            }
+                          },
+                        ),
                       ]),
                 ),
               ),

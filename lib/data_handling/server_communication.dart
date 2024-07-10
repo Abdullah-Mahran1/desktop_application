@@ -1,24 +1,24 @@
 import 'dart:io';
-import 'package:csv/csv.dart';
 
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/data_handling/csv_communication.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:modbus/modbus.dart';
 
-Future<void> readDataContinuously() async {
+int count = 0;
+
+Future<void> readFromDeviceLoop() async {
   /*
   1. read data point
   2. save data point in csv file (name is year, month)
   */
-  if (await pingIP(ipAddress: serverIpAdrs, port: serverPortNo)) {
-    debugPrint('Pinging & Socket check were successful! ');
+  if (!await pingIP(ipAddress: serverIpAdrs, port: serverPortNo)) {
+    debugPrint('Error: Pinging or Socket check failed! ');
   }
+  // else{debugPrint('Pinging & Socket check were successful! ');}
   ModbusClient client = createTcpClient(serverIpAdrs,
-      port: serverPortNo, unitId: 1, mode: ModbusMode.rtu);
-  List<int> chAddresses = [30001, 30101, 30201, 30301];
-  int readingBuffer =
-      10; // number of elements to accumulate before storing to excel file, production version can have value of 50
+      port: serverPortNo, unitId: deviceId, mode: ModbusMode.rtu);
   // Map<String, double> filter = {
   //   'min': 0,
   //   'max': 0,
@@ -26,17 +26,18 @@ Future<void> readDataContinuously() async {
   //   'p2p': 0,
   // };
   List<DataEntry> dataEntries = [];
-  int count = 0;
   try {
     await client.connect();
     // if(client.)
     while (true) {
       List<int> values =
-          await client.readInputRegisters(chAddresses[0] - 30001, 15);
+          await client.readInputRegisters(chAddresses[1] - 30001, 15);
       if (values.isNotEmpty) {
         debugPrint(values.toString());
         if (values[0] == 1) {
-          throw ('Gateway retruned an errorm Rule-base Result is 1 which is an error according to modbus mapping in manual');
+          // throw ('Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
+          // debugPrint(
+          //     'Trial #${count++} Error connecting to / reading from Modbus server: \n    Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
         }
         DataEntry dataEntry = DataEntry(
             dateTime: DateTime.now(),
@@ -48,16 +49,19 @@ Future<void> readDataContinuously() async {
         dataEntries.add(dataEntry);
       }
       if (dataEntries.length >= readingBuffer) {
-        await saveToExcel(dataEntries);
+        await saveToCsv(dataEntries);
         dataEntries = [];
       }
       // debugPrint('.len: ${dataEntries.length}');
-      await Future.delayed(const Duration(milliseconds: 2000));
+      await Future.delayed(const Duration(milliseconds: serverReadingDelay));
+      count = 0;
     }
   } catch (e) {
-    debugPrint(
-        'Trial #${count++} Error connecting to / reading from Modbus server ${e.toString()}');
-    readDataContinuously();
+    // debugPrint(
+    // 'Trial #${count++} Error connecting to / reading from Modbus server: ${e.toString()}');
+    await Future.delayed(const Duration(milliseconds: serverReadingDelay));
+
+    readFromDeviceLoop();
   } finally {
     await client.close();
   }
@@ -86,26 +90,4 @@ Future<bool> pingIP(
     isPortOpen = false;
   }
   return (didPing & isPortOpen);
-}
-
-Future<bool> saveToExcel(List<DataEntry> dataEntries) async {
-  try {
-    var file = File(
-        'assets/data/${dataEntries[0].dateTime.toString().substring(0, 7)}.csv');
-    // debugPrint('csv exists? ${file.existsSync()}');
-
-    var csvData = file.existsSync()
-        ? const CsvToListConverter().convert(await file.readAsString())
-        : <List<dynamic>>[];
-    // debugPrint('csv exists? ${file.existsSync()}');
-
-    csvData.addAll(dataEntries.map((it) => it.toCSVRow()));
-    String csv = const ListToCsvConverter().convert(csvData);
-    await file.writeAsString(csv);
-    debugPrint('Saved ✔');
-    return true;
-  } catch (e) {
-    debugPrint(e.toString());
-    return false;
-  }
 }

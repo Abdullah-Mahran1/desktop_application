@@ -1,5 +1,6 @@
 class DataEntry {
-  final DateTime dateTime;
+  DateTime dateTime;
+  late double timeValue; // X-axis value not label
   final double min, max, average, peak2Peak;
 
   DataEntry(
@@ -7,7 +8,9 @@ class DataEntry {
       required this.min,
       required this.max,
       required this.average,
-      required this.peak2Peak});
+      required this.peak2Peak}) {
+    String timeValue = dateTime.toString().replaceAll(RegExp(r'[^\d]'), '');
+  }
   List<String> toCSVRow() {
     return [
       dateTime.toString(),
