@@ -1,10 +1,18 @@
 import 'dart:io';
 
 import 'package:csv/csv.dart';
-import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_bloc/flutter_bloc.dart';
+/*
+Methods of the file:
+saveToCsv : saves List<DataEntry> to csv file
+loadFromCsv : returns List<DataEntry> from csv file
+removeExcessData: loadFromCsv uses to split loaded data to retrun only data needed to display from graph
+
+
+*/
 
 Future<bool> saveToCsv(List<DataEntry> dataEntries) async {
   try {
@@ -33,18 +41,20 @@ Future<bool> saveToCsv(List<DataEntry> dataEntries) async {
   }
 }
 
-Future<List<DataEntry>> loadFromCsv(String month) async {
+Future<List<DataEntry>> loadFromCsv(String month,
+    {required BuildContext context}) async {
   try {
-    var file = File('assets/data/$month.csv');
+    var file = File(month);
     if (!file.existsSync()) {
-      debugPrint('File does not exist: ${file.path}');
+      debugPrint('File does not exist: ${file.path}, loadFromCsv() error');
       return [];
+    } else {
+      // debugPrint('opened file');
     }
 
     String contents = await file.readAsString();
     List<List<dynamic>> csvData = const CsvToListConverter().convert(contents);
 
-    // Remove header if present
     if (csvData.isNotEmpty && csvData[0][0] == 'TimeStamp') {
       csvData.removeAt(0);
     }
@@ -60,132 +70,74 @@ Future<List<DataEntry>> loadFromCsv(String month) async {
     }).toList();
 
     debugPrint('Loaded ${dataEntries.length} entries from CSV');
-    return await removeExcessData(
-      dataEntries: dataEntries,
-      doNullIfLess: false,
-    )!;
+    return removeExcessData(
+            dataEntries: dataEntries, doNullIfLess: false, context: context) ??
+        [];
   } catch (e) {
     debugPrint('Error reading CSV: ${e.toString()}');
     return [];
   }
 }
 
-// Main function to remove excess data
-List<DataEntry>? removeExcessData({
-  required List<DataEntry> dataEntries,
-  bool doNullIfLess = true,
-}) {
+List<DataEntry>? removeExcessData(
+    {required List<DataEntry> dataEntries,
+    bool doNullIfLess = true,
+    required BuildContext context}) {
   if (dataEntries.isEmpty) return null;
 
-  TimeSpanRequirement requirement = getRequiredTimeSpan(currentXView);
-  bool isEnoughData =
-      isTimeSpanSufficient(dataEntries.first, dataEntries.last, requirement);
+  int requiredValue;
+  Duration requiredDuration;
+  GraphXView currentXView = context.read<SettingsCubit>().state.graphXView;
+
+  switch (currentXView) {
+    case GraphXView.MINUTE:
+      requiredValue = 1;
+      requiredDuration = const Duration(minutes: 1);
+      break;
+    case GraphXView.HOUR:
+      requiredValue = 1;
+      requiredDuration = const Duration(hours: 1);
+      break;
+    case GraphXView.SIX_HOURS:
+      requiredValue = 6;
+      requiredDuration = const Duration(hours: 6);
+      break;
+    case GraphXView.DAY:
+      requiredValue = 1;
+      requiredDuration = const Duration(days: 1);
+      break;
+    case GraphXView.SIX_DAYS:
+      requiredValue = 6;
+      requiredDuration = const Duration(days: 6);
+      break;
+  }
+
+  Duration actualDuration =
+      dataEntries.last.dateTime.difference(dataEntries.first.dateTime);
+  bool isEnoughData;
+
+  switch (currentXView) {
+    case GraphXView.MINUTE:
+      isEnoughData = actualDuration.inMinutes >= requiredValue;
+      break;
+    case GraphXView.HOUR:
+    case GraphXView.SIX_HOURS:
+      isEnoughData = actualDuration.inHours >= requiredValue;
+      break;
+    case GraphXView.DAY:
+    case GraphXView.SIX_DAYS:
+      isEnoughData = actualDuration.inDays >= requiredValue;
+      break;
+  }
 
   if (!isEnoughData) {
     return doNullIfLess ? null : dataEntries;
   }
 
-  // If we have more data than needed, trim it
-  return trimDataToTimeSpan(dataEntries, requirement);
-}
-
-class TimeSpanRequirement {
-  final int value;
-  final GraphXView unit;
-
-  TimeSpanRequirement(this.value, this.unit);
-}
-
-// Updated function to get the required time span for each GraphXView
-TimeSpanRequirement getRequiredTimeSpan(GraphXView view) {
-  switch (view) {
-    case GraphXView.MINUTE:
-      return TimeSpanRequirement(1, GraphXView.MINUTE);
-    case GraphXView.HOUR:
-      return TimeSpanRequirement(1, GraphXView.HOUR);
-    case GraphXView.SIX_HOURS:
-      return TimeSpanRequirement(6, GraphXView.HOUR);
-    case GraphXView.DAY:
-      return TimeSpanRequirement(1, GraphXView.DAY);
-    case GraphXView.SIX_DAYS:
-      return TimeSpanRequirement(6, GraphXView.DAY);
-  }
-}
-
-// Updated function to calculate the time difference based on the required unit
-bool isTimeSpanSufficient(
-    DataEntry first, DataEntry last, TimeSpanRequirement requirement) {
-  Duration difference = last.dateTime.difference(first.dateTime);
-  switch (requirement.unit) {
-    case GraphXView.MINUTE:
-      return difference.inMinutes >= requirement.value;
-    case GraphXView.HOUR:
-    case GraphXView.SIX_HOURS:
-      return difference.inHours >= requirement.value;
-    case GraphXView.DAY:
-    case GraphXView.SIX_DAYS:
-      return difference.inDays >= requirement.value;
-  }
-}
-
-// Updated function to trim data to the required time span
-List<DataEntry> trimDataToTimeSpan(
-    List<DataEntry> dataEntries, TimeSpanRequirement requirement) {
   DateTime endTime = dataEntries.last.dateTime;
-  DateTime startTime;
-
-  switch (requirement.unit) {
-    case GraphXView.MINUTE:
-      startTime = endTime.subtract(Duration(minutes: requirement.value));
-      break;
-    case GraphXView.HOUR:
-    case GraphXView.SIX_HOURS:
-      startTime = endTime.subtract(Duration(hours: requirement.value));
-      break;
-    case GraphXView.DAY:
-    case GraphXView.SIX_DAYS:
-      startTime = endTime.subtract(Duration(days: requirement.value));
-      break;
-  }
+  DateTime startTime = endTime.subtract(requiredDuration);
 
   return dataEntries
       .where((entry) => entry.dateTime.isAfter(startTime))
       .toList();
 }
-
-
-
-// Future<List<List<dynamic>>?> loadFromCsv(String filePath) async {
-//   // TODO: prepare for enter-day data-loading (load multiple days at once)
-//   // Load the CSV file
-//   String csvData;
-//   try {
-//     csvData = await rootBundle.loadString(filePath);
-//   } catch (e) {
-//     debugPrint('Error loading CSV file: $e');
-//     // Handle the error, maybe show a dialog to the user
-//     return null;
-//   }
-//   // Parse the CSV data
-//   List<List<dynamic>> csvTable = const CsvToListConverter().convert(csvData);
-
-//   // // Extract the first and fourth columns
-//   // List<dynamic> timeStampColumn = []; // Col 0
-//   // List<dynamic> minColumn = []; // col 1
-//   // List<dynamic> maxColumn = []; // col 2
-//   // List<dynamic> avgColumn = []; // col 3
-//   // List<dynamic> peak2PeakColumn = []; // col 5
-
-//   // for (List<dynamic> row in csvTable.skip(1)) {
-//   //   timeStampColumn.add(row[0]);
-//   //   minColumn.add(row[1]);
-//   //   maxColumn.add(row[2]);
-//   //   avgColumn.add(row[3]);
-//   //   peak2PeakColumn.add(row[4]);
-//   // }
-
-//   // // Do something with the extracted data
-//   // debugPrint('First column: $timeStampColumn');
-//   // debugPrint('Avg column: $avgColumn');
-//   return csvTable;
-// }

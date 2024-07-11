@@ -13,6 +13,11 @@ Future<void> readFromDeviceLoop() async {
   1. read data point
   2. save data point in csv file (name is year, month)
   */
+  // AlertsManager.addAlert(AlertModel(
+  //   alertIcon: Icons.warning,
+  //   errMsg: 'Ch0 - New Peak was Reached 3.1V',
+  //   timeDate: DateTime.now().toString(),
+  // ));
   if (!await pingIP(ipAddress: serverIpAdrs, port: serverPortNo)) {
     debugPrint('Error: Pinging or Socket check failed! ');
   }

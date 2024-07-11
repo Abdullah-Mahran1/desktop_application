@@ -1,4 +1,5 @@
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 

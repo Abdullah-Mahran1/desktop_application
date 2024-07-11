@@ -1,5 +1,5 @@
 import 'package:desktop_application/const/constants.dart';
-import 'package:desktop_application/cubits/cubit/side_buttons_cubit.dart';
+import 'package:desktop_application/cubits/settings_cubit/side_buttons_cubit.dart';
 import 'package:desktop_application/widgets/navigator_text_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

@@ -23,20 +23,29 @@ int readingBuffer =
 const int serverReadingDelay = 2000; // one millisecound per reading
 //  Global Variables:
 // int selectedSideMenuItem = 0;
+
 List<bool> selectedChannels = [true, true, false, false];
+Map<int, Map<String, double>> channelThresholds = {
+  0: {'>=': 3.7},
+  1: {'<': 3.7},
+  2: {'>=': 3.7},
+  3: {'>=': 3.7},
+};
 
-enum GraphXView {
-  MINUTE,
-  HOUR,
-  SIX_HOURS,
-  DAY,
-  SIX_DAYS,
-  // minutes([1, 2, 3]),
-  // hours([1, 2, 3]),
-  // days([1, 2, 3]);
+// enum GraphXView {
+//   MINUTE,
+//   HOUR,
+//   SIX_HOURS,
+//   DAY,
+//   SIX_DAYS
+//   // minutes([1, 2, 3]),
+//   // hours([1, 2, 3]),
+//   // days([1, 2, 3]);
 
-  // final List<int> data;
-  // const GraphXView(this.data);
-}
+//   // final List<int> data;
+//   // const GraphXView(this.data);
+// }
 
-GraphXView currentXView = GraphXView.MINUTE;
+// GraphXView currentXView = GraphXView.MINUTE;
+
+List<double> powerRange = [0, 80];
