@@ -35,11 +35,11 @@ class SfLineChart extends StatelessWidget {
               formattedValue, const TextStyle(color: Colors.black));
         },
       ),
-      primaryYAxis: NumericAxis(
-              minimum: -5,
-              maximum: 5,
-              interval: 1,
-            ),
+      primaryYAxis: const NumericAxis(
+        minimum: -5,
+        maximum: 5,
+        interval: 1,
+      ),
     );
   }
 }

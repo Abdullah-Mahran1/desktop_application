@@ -18,7 +18,8 @@ Future<void> readFromDeviceLoop() async {
   //   timeDate: DateTime.now().toString(),
   // ));
   if (!await pingIP(ipAddress: serverIpAdrs, port: serverPortNo)) {
-    debugPrint('Error: Pinging or Socket check failed! ');
+    throw 'Error: Pinging or Socket check failed! ';
+    // debugPrint();
   }
   // else{debugPrint('Pinging & Socket check were successful! ');}
   ModbusClient client = createTcpClient(serverIpAdrs,
@@ -40,8 +41,8 @@ Future<void> readFromDeviceLoop() async {
         debugPrint(values.toString());
         if (values[0] == 1) {
           // throw ('Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
-          // debugPrint(
-          //     'Trial #${count++} Error connecting to / reading from Modbus server: \n    Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
+          debugPrint(
+              'Trial #${count++} Error connecting to / reading from Modbus server: \n    Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
         }
         DataEntry dataEntry = DataEntry(
             dateTime: DateTime.now(),
@@ -76,11 +77,12 @@ Future<bool> pingIP(
     {required String ipAddress,
     required int port,
     Duration timeout = const Duration(seconds: 5)}) async {
-  bool didPing = false, isPortOpen = false;
+  bool didPing = true, isPortOpen = true;
+  int exitCode = 10000000;
   try {
-    final result = await Process.run(
-        'ping', ['-c', '1', '-W', timeout.toString(), ipAddress]);
-    didPing = result.exitCode == 0;
+    final result = await Process.run('ping', ['-n', '2', ipAddress]);
+    exitCode = result.exitCode;
+    didPing = exitCode == 0;
   } catch (e) {
     debugPrint('Error pinging $ipAddress: $e');
     didPing = false;
@@ -94,5 +96,7 @@ Future<bool> pingIP(
     debugPrint('Error checking $ipAddress:$port: $e');
     isPortOpen = false;
   }
+  debugPrint(
+      'didPing: $didPing, isPortOpen: $isPortOpen, exitCode = $exitCode');
   return (didPing & isPortOpen);
 }

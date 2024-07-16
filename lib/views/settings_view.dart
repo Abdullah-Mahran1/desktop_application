@@ -196,7 +196,7 @@ class _SettingsViewState extends State<SettingsView> {
     debugPrint('Channel Thresholds: $channelThresholds');
     for (String key in channelThresholds.keys) {
       BlocProvider.of<SettingsCubit>(context).updateChannelThreshold(
-          int.parse(key[-1]),
+          int.parse(key[key.length-1]),
           channelThresholds[key]!['operator'],
           channelThresholds[key]!['value']);
     }

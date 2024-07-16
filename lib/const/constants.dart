@@ -20,7 +20,7 @@ List<int> chAddresses = [30001, 30101, 30201, 30301]; //addresses of ch0 to ch3
 int readingBuffer =
     500; // number of elements to accumulate before storing to excel file, production version can have value of 50
 
-const int serverReadingDelay = 2000; // one millisecound per reading
+const int serverReadingDelay = 3000; // one millisecound per reading
 //  Global Variables:
 // int selectedSideMenuItem = 0;
 
