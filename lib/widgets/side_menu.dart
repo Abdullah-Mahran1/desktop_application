@@ -28,17 +28,17 @@ class SideMenu extends StatelessWidget {
                   BlocProvider.of<SideButtonsCubit>(context)
                       .navigate(toSettings: false);
                   debugPrint(
-                      'Selected menu is now Dashboard, state: ${state is SideButtonSetings}');
+                      'Selected menu is now Dashboard, state: ${state is SideButtonSettings}');
                 }),
             NavigatorTextButton(
                 myString: 'Settings',
                 icon: Icons.settings,
-                isSelected: (state is SideButtonSetings),
+                isSelected: (state is SideButtonSettings),
                 onPressed: () {
                   BlocProvider.of<SideButtonsCubit>(context)
                       .navigate(toSettings: true);
                   debugPrint(
-                      'Selected menu is now Settings. state: ${state is SideButtonSetings}');
+                      'Selected menu is now Settings. state: ${state is SideButtonSettings}');
                 }),
           ],
         );

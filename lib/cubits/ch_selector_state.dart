@@ -1,6 +1,5 @@
 part of 'ch_selector_cubit.dart';
 
-@immutable
 sealed class ChSelectorState {}
 
 final class ChSelectorInitial extends ChSelectorState {}

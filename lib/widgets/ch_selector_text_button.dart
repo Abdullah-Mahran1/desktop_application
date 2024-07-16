@@ -35,12 +35,12 @@ class ChSelectorTextButton extends StatelessWidget {
             child: Row(children: [
               Icon(
                 isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                color: isSelected ? color : const Color(secoundaryColor),
+                color: isSelected ? color : const Color(secondaryColor),
                 size: 20,
               ),
               Text(
                 ' Ch$index',
-                style: TextStyle(fontSize: 16, color: Color(blackColor)),
+                style: const TextStyle(fontSize: 16, color: Color(blackColor)),
               )
             ]),
           ),

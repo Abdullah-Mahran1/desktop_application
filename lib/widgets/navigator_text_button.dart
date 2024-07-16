@@ -23,7 +23,7 @@ class NavigatorTextButton extends StatelessWidget {
             overlayColor: const Color(highlightColor),
             foregroundColor: isSelected
                 ? const Color(highlightColor)
-                : const Color(secoundaryColor),
+                : const Color(secondaryColor),
             shadowColor: isSelected
                 ? const Color(highlightColor).withOpacity(0.2)
                 : Colors.transparent,

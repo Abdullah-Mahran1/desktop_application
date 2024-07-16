@@ -5,6 +5,7 @@ import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 /*
 Methods of the file:
 saveToCsv : saves List<DataEntry> to csv file
@@ -13,8 +14,14 @@ removeExcessData: loadFromCsv uses to split loaded data to retrun only data need
 
 
 */
+List<DataEntry> serverData = [];
 
-Future<bool> saveToCsv(List<DataEntry> dataEntries) async {
+Future<bool> saveToCsv(List<DataEntry>? dataEntries) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (dataEntries == null) {
+    debugPrint('Hala Belkhamees: ');
+    dataEntries = serverData;
+  }
   try {
     var file = File(
         'assets/data/${dataEntries[0].dateTime.toString().substring(0, 7)}.csv');
@@ -48,28 +55,30 @@ Future<List<DataEntry>> loadFromCsv(String month,
     if (!file.existsSync()) {
       debugPrint('File does not exist: ${file.path}, loadFromCsv() error');
       return [];
-    } else {
-      // debugPrint('opened file');
     }
+    // else {
+    // debugPrint('opened file');}
 
     String contents = await file.readAsString();
     List<List<dynamic>> csvData = const CsvToListConverter().convert(contents);
 
+    // remove labels
     if (csvData.isNotEmpty && csvData[0][0] == 'TimeStamp') {
       csvData.removeAt(0);
     }
 
     List<DataEntry> dataEntries = csvData.map((row) {
       return DataEntry(
-        dateTime: DateTime.parse(row[0]),
-        min: double.parse(row[1]),
-        max: double.parse(row[2]),
-        average: double.parse(row[3]),
-        peak2Peak: double.parse(row[4]),
+        dateTime: DateTime.parse(row[0].toString()),
+        min: double.parse(row[1].toString()),
+        max: double.parse(row[2].toString()),
+        average: double.parse(row[3].toString()),
+        peak2Peak: double.parse(row[4].toString()),
       );
     }).toList();
 
     debugPrint('Loaded ${dataEntries.length} entries from CSV');
+    serverData.addAll(dataEntries);
     return removeExcessData(
             dataEntries: dataEntries, doNullIfLess: false, context: context) ??
         [];
@@ -137,6 +146,7 @@ List<DataEntry>? removeExcessData(
   DateTime endTime = dataEntries.last.dateTime;
   DateTime startTime = endTime.subtract(requiredDuration);
 
+  debugPrint('removed excess data');
   return dataEntries
       .where((entry) => entry.dateTime.isAfter(startTime))
       .toList();

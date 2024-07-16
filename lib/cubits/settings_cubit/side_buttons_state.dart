@@ -1,11 +1,10 @@
 part of 'side_buttons_cubit.dart';
 
-@immutable
 sealed class SideButtonsState {}
 
 final class SideButtonDashboard extends SideButtonsState {}
 
-final class SideButtonSetings extends SideButtonsState {}
+final class SideButtonSettings extends SideButtonsState {}
 
 
 

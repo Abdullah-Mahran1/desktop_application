@@ -1,7 +1,7 @@
 const int backgroundColor = 0xffffffff;
-const int secoundBackgroundColor = 0xffF1F2F7;
+const int secondBackgroundColor = 0xffF1F2F7;
 
-const int secoundaryColor = 0xFFA6ABC8;
+const int secondaryColor = 0xFFA6ABC8;
 const int highlightColor = 0xff707FDD;
 const int alertColor = 0xFFFFCC00;
 const int blackColor = 0xFF111111;
@@ -18,7 +18,7 @@ const int serverPortNo = 502;
 const int deviceId = 1;
 List<int> chAddresses = [30001, 30101, 30201, 30301]; //addresses of ch0 to ch3
 int readingBuffer =
-    10; // number of elements to accumulate before storing to excel file, production version can have value of 50
+    500; // number of elements to accumulate before storing to excel file, production version can have value of 50
 
 const int serverReadingDelay = 2000; // one millisecound per reading
 //  Global Variables:
@@ -31,6 +31,7 @@ Map<int, Map<String, double>> channelThresholds = {
   2: {'>=': 3.7},
   3: {'>=': 3.7},
 };
+List<double> powerRange = [0, 80];
 
 // enum GraphXView {
 //   MINUTE,
@@ -48,4 +49,3 @@ Map<int, Map<String, double>> channelThresholds = {
 
 // GraphXView currentXView = GraphXView.MINUTE;
 
-List<double> powerRange = [0, 80];

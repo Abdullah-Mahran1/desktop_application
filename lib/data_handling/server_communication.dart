@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:modbus/modbus.dart';
 
 int count = 0;
-
 Future<void> readFromDeviceLoop() async {
   /*
   1. read data point
@@ -52,6 +51,7 @@ Future<void> readFromDeviceLoop() async {
             peak2Peak: values[10] / 100);
         debugPrint(dataEntry.toString());
         dataEntries.add(dataEntry);
+        serverData.add(dataEntry);
       }
       if (dataEntries.length >= readingBuffer) {
         await saveToCsv(dataEntries);

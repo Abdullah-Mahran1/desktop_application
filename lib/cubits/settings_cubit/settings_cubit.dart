@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum GraphXView { MINUTE, HOUR, SIX_HOURS, DAY, SIX_DAYS }
@@ -23,7 +24,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   void saveSettings() {
     // Here you would typically save the settings to persistent storage
     // For now, we'll just print the current state
-    print('Saving settings: ${state.toString()}');
+    debugPrint('Saving settings: ${state.toString()}');
   }
 }
 

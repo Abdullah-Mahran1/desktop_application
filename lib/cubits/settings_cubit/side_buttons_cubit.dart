@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:meta/meta.dart';
 
 part 'side_buttons_state.dart';
 
@@ -8,10 +7,12 @@ class SideButtonsCubit extends Cubit<SideButtonsState> {
 
   void navigate({required bool toSettings}) {
     if (toSettings) {
-      emit(SideButtonSetings());
+      emit(SideButtonSettings());
     } else {
       //Dashboard
       emit(SideButtonDashboard());
     }
   }
+
+  bool get isSettings => state is SideButtonSettings;
 }
