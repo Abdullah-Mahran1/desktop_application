@@ -28,11 +28,11 @@ samples, guidance on mobile development, and a full API reference.
 6. manage alerts using hive (✔)
 7. correct init code, to have (Singlton settings and data container) (✔)
 8. Store settings (✔)
-9. Add live graph
-10. Check connection
+9. Add live graph ()
+10. Check connection (✔)
 11. Throw alerts when:
     - threshold is exceeded
-    - device is disconnected, show statues of ping & modbus connections
+    - device is disconnected, show statues of ping & modbus connections (✔)
 
 ## File Structure
 

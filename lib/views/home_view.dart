@@ -1,4 +1,5 @@
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/cubits/device_connection_cubit.dart';
 import 'package:desktop_application/cubits/settings_cubit/side_buttons_cubit.dart';
 import 'package:desktop_application/views/alerts_section.dart';
 import 'package:desktop_application/views/dashboard.dart';
@@ -17,6 +18,9 @@ class HomeView extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => SideButtonsCubit(),
+        ),
+        BlocProvider(
+          create: (context) => DeviceConnectionCubit(),
         ),
       ],
       child: Scaffold(

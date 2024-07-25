@@ -138,11 +138,12 @@ class _SettingsViewState extends State<SettingsView> {
             const Text('Power range'),
             const SizedBox(height: defaultPadding),
             DateTimePickerWidget(
+              isLiveGraph: isLiveGraph,
               initialDateTime: startingDateTime != null
                   ? DateTime.parse(startingDateTime!)
                   : null,
               onDateTimeSelected: isLiveGraph
-                  ? (dateTime) {}
+                  ? (_) {}
                   : (dateTime) {
                       setState(() {
                         startingDateTime = dateTime.toString();

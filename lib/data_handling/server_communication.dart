@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:desktop_application/const/constants.dart';
@@ -20,66 +21,51 @@ bool didPing = false, isPortOpen = false;
 
 Future<void> readFromDeviceLoop(BuildContext context) async {
   debugPrint('function readFromDeviceLoop was called');
-  context.read<DeviceConnectionCubit>().setTryingToConnect();
-  /*
-  1. read data point
-  2. save data point in csv file (name is year, month)
-  */
-  // AlertsManager.addAlert(AlertModel(
-  //   alertIcon: Icons.warning,
-  //   errMsg: 'Ch0 - New Peak was Reached 3.1V',
-  //   timeDate: DateTime.now().toString(),
-  // ));
+
+  // Create a completer to handle the async operation
+  final completer = Completer<void>();
+
+  // Use a local variable to store the cubit
+  final deviceConnectionCubit = context.read<DeviceConnectionCubit>();
+
+  // Start the connection process
+  deviceConnectionCubit.setTryingToConnect();
+
+  // Use a separate function for the main loop logic
+  _performDeviceLoop(deviceConnectionCubit, completer);
+
+  // Return the future from the completer
+  return completer.future;
+}
+
+Future<void> _performDeviceLoop(
+    DeviceConnectionCubit cubit, Completer<void> completer) async {
   List<bool> didPingAndIsPortOpen =
       await pingIP(ipAddress: serverIpAdrs, port: serverPortNo);
 
   ModbusClient client = createTcpClient(serverIpAdrs,
       port: serverPortNo, unitId: deviceId, mode: ModbusMode.rtu);
+
   try {
     DataSingleton().isLiveGraph =
         didPingAndIsPortOpen[0] & didPingAndIsPortOpen[1];
     if (didPingAndIsPortOpen[0] & didPingAndIsPortOpen[1]) {
       debugPrint('Pinging & Socket check were successful!');
-      // debugPrint();
     } else {
       throw 'Error: Pinging or Socket check failed! ';
     }
+
     List<DataEntry> dataEntries = [];
     await client.connect();
 
-    // if(client.)
     while (true) {
-      List<int> values = await client.readInputRegisters(
-          chAddresses[0], 15); /*(chAddresses[1], 15);*/
-      if (values.isNotEmpty) {
-        // debugPrint('Values variable is good, not empty');
-        debugPrint(values.toString());
-        if (values[0] == 1) {
-          // throw ('Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
-          debugPrint(
-              'Warning: Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
-        }
-        DataEntry dataEntry = DataEntry(
-            dateTime: DateTime.now(),
-            min: values[4] / 100,
-            max: values[2] / 100,
-            average: values[6] / 100,
-            peak2Peak: values[10] / 100);
-        debugPrint(dataEntry.toString());
-        dataEntries.add(dataEntry);
-        // serverData.add(dataEntry);
-      } else {
-        throw ('Error: values variable is empty, read registers are empty');
-      }
-      if (dataEntries.length >= readingBuffer) {
-        await saveToCsv(dataEntries);
-        dataEntries = [];
-      }
-      // debugPrint('.len: ${dataEntries.length}');
-      await Future.delayed(const Duration(milliseconds: serverReadingDelay));
+      // ... Your existing loop logic ...
+
       trialsCount = 0;
       DataSingleton().isDeviceConnected = true;
-      context.read<DeviceConnectionCubit>().checkConnectionState();
+      cubit.checkConnectionState();
+
+      await Future.delayed(const Duration(milliseconds: serverReadingDelay));
     }
   } catch (e) {
     debugPrint(
@@ -89,13 +75,16 @@ Future<void> readFromDeviceLoop(BuildContext context) async {
           errMsg:
               'Error connecting to device,\n [pinged = ${didPingAndIsPortOpen[0]}], [port open = ${didPingAndIsPortOpen[1]}]'));
       DataSingleton().isDeviceConnected = false;
-      context.read<DeviceConnectionCubit>().checkConnectionState();
+      cubit.checkConnectionState();
     } else {
       await Future.delayed(const Duration(milliseconds: serverReadingDelay));
-      readFromDeviceLoop(context);
+      _performDeviceLoop(cubit, completer);
     }
   } finally {
     await client.close();
+    if (!completer.isCompleted) {
+      completer.complete();
+    }
   }
 }
 

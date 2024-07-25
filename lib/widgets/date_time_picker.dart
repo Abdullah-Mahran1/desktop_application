@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class DateTimePickerWidget extends StatefulWidget {
   final Function(DateTime) onDateTimeSelected;
   final DateTime? initialDateTime;
+  final bool isLiveGraph;
 
   const DateTimePickerWidget({
     Key? key,
     required this.onDateTimeSelected,
     this.initialDateTime,
+    required this.isLiveGraph,
   }) : super(key: key);
 
   @override
@@ -39,49 +41,57 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          DatePickerWidget(
-            initialDate: selectedDate,
-            onDateSelected: (date) {
-              setState(() {
-                selectedDate = date;
-                _updateDateTime();
-              });
-            },
-          ),
-          const SizedBox(width: defaultPadding),
-          TimePickerWidget(
-            initialTime: selectedTime,
-            onTimeSelected: (time) {
-              setState(() {
-                selectedTime = TimeOfDay(hour: time.hour, minute: time.minute);
-                _updateDateTime();
-              });
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-        ],
-      ),
-      const SizedBox(
-        height: defaultPadding,
-      ),
-      Text(
-        "Selected DateTime: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')} ${selectedTime.format(context)}",
-      ),
-    ]);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            DatePickerWidget(
+              initialDate: selectedDate,
+              onDateSelected: (date) {
+                setState(() {
+                  selectedDate = date;
+                  _updateDateTime();
+                });
+              },
+              isLiveGraph: widget.isLiveGraph,
+            ),
+            const SizedBox(width: defaultPadding),
+            TimePickerWidget(
+              initialTime: selectedTime,
+              onTimeSelected: (time) {
+                setState(() {
+                  selectedTime =
+                      TimeOfDay(hour: time.hour, minute: time.minute);
+                  _updateDateTime();
+                });
+              },
+              isLiveGraph: widget.isLiveGraph,
+            ),
+            const SizedBox(height: defaultPadding),
+          ],
+        ),
+        const SizedBox(height: defaultPadding),
+        Text(
+          "Selected DateTime: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')} ${selectedTime.format(context)}",
+        ),
+      ],
+    );
   }
 }
 
 class DatePickerWidget extends StatefulWidget {
   final Function(DateTime) onDateSelected;
   final DateTime initialDate;
+  final bool isLiveGraph;
 
-  DatePickerWidget(
-      {Key? key, required this.onDateSelected, required this.initialDate})
-      : super(key: key);
+  DatePickerWidget({
+    Key? key,
+    required this.onDateSelected,
+    required this.initialDate,
+    required this.isLiveGraph,
+  }) : super(key: key);
 
   @override
   _DatePickerWidgetState createState() => _DatePickerWidgetState();
@@ -101,20 +111,22 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: () async {
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: selectedDate,
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2101),
-            );
-            if (pickedDate != null && pickedDate != selectedDate) {
-              setState(() {
-                selectedDate = pickedDate;
-              });
-              widget.onDateSelected(selectedDate);
-            }
-          },
+          onPressed: widget.isLiveGraph
+              ? null
+              : () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2101),
+                  );
+                  if (pickedDate != null && pickedDate != selectedDate) {
+                    setState(() {
+                      selectedDate = pickedDate;
+                    });
+                    widget.onDateSelected(selectedDate);
+                  }
+                },
           child: const Text("Select Date",
               style: TextStyle(color: Color(highlightColor))),
         ),
@@ -126,10 +138,14 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
 class TimePickerWidget extends StatefulWidget {
   final Function(DateTime) onTimeSelected;
   final TimeOfDay initialTime;
+  final bool isLiveGraph;
 
-  TimePickerWidget(
-      {Key? key, required this.onTimeSelected, required this.initialTime})
-      : super(key: key);
+  TimePickerWidget({
+    Key? key,
+    required this.onTimeSelected,
+    required this.initialTime,
+    required this.isLiveGraph,
+  }) : super(key: key);
 
   @override
   _TimePickerWidgetState createState() => _TimePickerWidgetState();
@@ -149,21 +165,23 @@ class _TimePickerWidgetState extends State<TimePickerWidget> {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: () async {
-            final TimeOfDay? pickedTime = await showTimePicker(
-              context: context,
-              initialTime: selectedTime,
-            );
-            if (pickedTime != null && pickedTime != selectedTime) {
-              setState(() {
-                selectedTime = pickedTime;
-              });
-              final now = DateTime.now();
-              final selectedDateTime = DateTime(now.year, now.month, now.day,
-                  selectedTime.hour, selectedTime.minute);
-              widget.onTimeSelected(selectedDateTime);
-            }
-          },
+          onPressed: widget.isLiveGraph
+              ? null
+              : () async {
+                  final TimeOfDay? pickedTime = await showTimePicker(
+                    context: context,
+                    initialTime: selectedTime,
+                  );
+                  if (pickedTime != null && pickedTime != selectedTime) {
+                    setState(() {
+                      selectedTime = pickedTime;
+                    });
+                    final now = DateTime.now();
+                    final selectedDateTime = DateTime(now.year, now.month,
+                        now.day, selectedTime.hour, selectedTime.minute);
+                    widget.onTimeSelected(selectedDateTime);
+                  }
+                },
           child: const Text("Select Time",
               style: TextStyle(color: Color(highlightColor))),
         ),

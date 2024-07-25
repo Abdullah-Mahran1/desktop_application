@@ -95,15 +95,8 @@ class ChSelectorPanel extends StatelessWidget {
             color: const Color(secondBackgroundColor),
             border: Border.all(color: Colors.black.withOpacity(0.2)),
             borderRadius: BorderRadius.circular(8)),
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider<ChSelectorCubit>(
-              create: (context) => ChSelectorCubit(),
-            ),
-            BlocProvider(
-              create: (context) => DeviceConnectionCubit(),
-            ),
-          ],
+        child: BlocProvider<ChSelectorCubit>(
+          create: (context) => ChSelectorCubit(),
           child: BlocBuilder<ChSelectorCubit, ChSelectorState>(
             builder: (context, state) {
               initFunction(context);
