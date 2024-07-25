@@ -26,7 +26,7 @@ class RetryConnectionButton extends StatelessWidget {
             backgroundColor:
                 (state is TryingToConnect) ? Colors.grey[200] : null,
           ),
-          onPressed: (state is! TryingToConnect) ? onPressed : null,
+          onPressed: (state is Disconnected) ? onPressed : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Center(

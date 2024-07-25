@@ -17,8 +17,8 @@ void main() async {
   - DB load from excel into singlton - done
   - init Hive - done
   - load settings from hive (optional) - done
-  - load alerts from Hive - 
-  - start reading loop
+  - load alerts from Hive - done
+  - start reading loop - done
    */
   // // Set up a listener for the application closing event
   // const MethodChannel('flutter/platform')
