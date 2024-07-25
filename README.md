@@ -21,11 +21,18 @@ samples, guidance on mobile development, and a full API reference.
 2. store data in csv format (✔)
 3. load data from csv format (✔)
 4. display data in graph, steps:
-    - readFromCsv returns List<DataEntry> (✔)
-    - loadGraphData converts it into [1] FlChartData - (✔) & [2] creates understandable labels for it
-    - chardWidget takes data and draws chart
-5. UI and navigation
-6. manage alerts using hive
+    - readFromCsv returns List of DataEntry (✔)
+    - loadGraphData converts it into [1] DataEntries - (✔) & [2] creates understandable labels for it (✔)
+    - chartWidget takes data and draws chart (✔)
+5. UI and navigation (✔)
+6. manage alerts using hive (✔)
+7. correct init code, to have (Singlton settings and data container) (✔)
+8. Store settings (✔)
+9. Add live graph
+10. Check connection
+11. Throw alerts when:
+    - threshold is exceeded
+    - device is disconnected, show statues of ping & modbus connections
 
 ## File Structure
 

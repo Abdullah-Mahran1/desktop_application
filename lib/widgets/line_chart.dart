@@ -1,4 +1,7 @@
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
+import 'dart:math';
+
+import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
 import 'package:desktop_application/data_handling/graph_data_processing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -124,8 +127,7 @@ class MyLineChart2 extends StatelessWidget {
 
   Widget bottomTitleWidgets(double value, TitleMeta meta) {
     //value template: 20240709091259355000.0
-    String axisNumber =
-        generateLabel(value, context.read<SettingsCubit>().state.graphXView);
+    String axisNumber = DataSingleton().xView ?? 'MINUTE';
     const style = TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: 10,
@@ -177,7 +179,7 @@ class MyLineChart2 extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: bottomTitleWidgets,
-                interval: (flSpots.length / 4).ceil().toDouble(),
+                interval: max((flSpots.length / 10).ceil().toDouble(), 1000),
                 // reservedSize: 22,
               ),
             ),

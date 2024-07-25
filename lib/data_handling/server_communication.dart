@@ -1,13 +1,26 @@
 import 'dart:io';
 
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
+import 'package:desktop_application/cubits/device_connection_cubit.dart';
+import 'package:desktop_application/data_handling/alerts_management.dart';
 import 'package:desktop_application/data_handling/csv_communication.dart';
+import 'package:desktop_application/models/alert_model.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:modbus/modbus.dart';
 
-int count = 0;
-Future<void> readFromDeviceLoop() async {
+int trialsCount = 0;
+bool didPing = false, isPortOpen = false;
+
+// List<DataEntry> serverData = [];
+// int readingBuffer = 10; // Number of readings to buffer before saving to CSV
+// int serverReadingDelay = 1000; // Delay between readings in milliseconds
+
+Future<void> readFromDeviceLoop(BuildContext context) async {
+  debugPrint('function readFromDeviceLoop was called');
+  context.read<DeviceConnectionCubit>().setTryingToConnect();
   /*
   1. read data point
   2. save data point in csv file (name is year, month)
@@ -17,32 +30,34 @@ Future<void> readFromDeviceLoop() async {
   //   errMsg: 'Ch0 - New Peak was Reached 3.1V',
   //   timeDate: DateTime.now().toString(),
   // ));
-  if (!await pingIP(ipAddress: serverIpAdrs, port: serverPortNo)) {
-    throw 'Error: Pinging or Socket check failed! ';
-    // debugPrint();
-  }
-  // else{debugPrint('Pinging & Socket check were successful! ');}
+  List<bool> didPingAndIsPortOpen =
+      await pingIP(ipAddress: serverIpAdrs, port: serverPortNo);
+
   ModbusClient client = createTcpClient(serverIpAdrs,
       port: serverPortNo, unitId: deviceId, mode: ModbusMode.rtu);
-  // Map<String, double> filter = {
-  //   'min': 0,
-  //   'max': 0,
-  //   'avg': 0,
-  //   'p2p': 0,
-  // };
-  List<DataEntry> dataEntries = [];
   try {
+    DataSingleton().isLiveGraph =
+        didPingAndIsPortOpen[0] & didPingAndIsPortOpen[1];
+    if (didPingAndIsPortOpen[0] & didPingAndIsPortOpen[1]) {
+      debugPrint('Pinging & Socket check were successful!');
+      // debugPrint();
+    } else {
+      throw 'Error: Pinging or Socket check failed! ';
+    }
+    List<DataEntry> dataEntries = [];
     await client.connect();
+
     // if(client.)
     while (true) {
-      List<int> values =
-          await client.readInputRegisters(chAddresses[1] - 30001, 15);
+      List<int> values = await client.readInputRegisters(
+          chAddresses[0], 15); /*(chAddresses[1], 15);*/
       if (values.isNotEmpty) {
+        // debugPrint('Values variable is good, not empty');
         debugPrint(values.toString());
         if (values[0] == 1) {
           // throw ('Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
           debugPrint(
-              'Trial #${count++} Error connecting to / reading from Modbus server: \n    Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
+              'Warning: Gateway retruned an error. Rule-base Result is 1 which is an error according to modbus mapping in manual');
         }
         DataEntry dataEntry = DataEntry(
             dateTime: DateTime.now(),
@@ -52,7 +67,9 @@ Future<void> readFromDeviceLoop() async {
             peak2Peak: values[10] / 100);
         debugPrint(dataEntry.toString());
         dataEntries.add(dataEntry);
-        serverData.add(dataEntry);
+        // serverData.add(dataEntry);
+      } else {
+        throw ('Error: values variable is empty, read registers are empty');
       }
       if (dataEntries.length >= readingBuffer) {
         await saveToCsv(dataEntries);
@@ -60,27 +77,34 @@ Future<void> readFromDeviceLoop() async {
       }
       // debugPrint('.len: ${dataEntries.length}');
       await Future.delayed(const Duration(milliseconds: serverReadingDelay));
-      count = 0;
+      trialsCount = 0;
+      DataSingleton().isDeviceConnected = true;
+      context.read<DeviceConnectionCubit>().checkConnectionState();
     }
   } catch (e) {
-    // debugPrint(
-    // 'Trial #${count++} Error connecting to / reading from Modbus server: ${e.toString()}');
-    await Future.delayed(const Duration(milliseconds: serverReadingDelay));
-
-    readFromDeviceLoop();
+    debugPrint(
+        'Trial #${trialsCount++} Error connecting to / reading from Modbus server: ${e.toString()}');
+    if (trialsCount > 2) {
+      AlertsManager.addAlert(AlertModel(
+          errMsg:
+              'Error connecting to device,\n [pinged = ${didPingAndIsPortOpen[0]}], [port open = ${didPingAndIsPortOpen[1]}]'));
+      DataSingleton().isDeviceConnected = false;
+      context.read<DeviceConnectionCubit>().checkConnectionState();
+    } else {
+      await Future.delayed(const Duration(milliseconds: serverReadingDelay));
+      readFromDeviceLoop(context);
+    }
   } finally {
     await client.close();
   }
 }
 
-Future<bool> pingIP(
-    {required String ipAddress,
-    required int port,
-    Duration timeout = const Duration(seconds: 5)}) async {
+Future<List<bool>> pingIP(
+    {required String ipAddress, required int port, int timeout = 10000}) async {
   bool didPing = true, isPortOpen = true;
   int exitCode = 10000000;
   try {
-    final result = await Process.run('ping', ['-n', '2', ipAddress]);
+    final result = await Process.run('ping', ['-n', '1', ipAddress]);
     exitCode = result.exitCode;
     didPing = exitCode == 0;
   } catch (e) {
@@ -89,7 +113,8 @@ Future<bool> pingIP(
   }
 
   try {
-    final socket = await Socket.connect(ipAddress, port, timeout: timeout);
+    final socket = await Socket.connect(ipAddress, port,
+        timeout: Duration(milliseconds: timeout));
     await socket.close();
     isPortOpen = true;
   } catch (e) {
@@ -98,5 +123,5 @@ Future<bool> pingIP(
   }
   debugPrint(
       'didPing: $didPing, isPortOpen: $isPortOpen, exitCode = $exitCode');
-  return (didPing & isPortOpen);
+  return [didPing, isPortOpen];
 }

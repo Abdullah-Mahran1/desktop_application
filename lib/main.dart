@@ -1,4 +1,5 @@
 import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
 import 'package:desktop_application/data_handling/csv_communication.dart';
 import 'package:desktop_application/data_handling/server_communication.dart';
 import 'package:desktop_application/models/icon_data_hive.dart';
@@ -11,7 +12,15 @@ import 'models/alert_model.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set up a listener for the application closing event
+  /*
+  tasks to be done on init:
+  - DB load from excel into singlton - done
+  - init Hive - done
+  - load settings from hive (optional) - done
+  - load alerts from Hive - 
+  - start reading loop
+   */
+  // // Set up a listener for the application closing event
   // const MethodChannel('flutter/platform')
   //     .setMethodCallHandler((MethodCall call) async {
   //   if (call.method == 'AppLifecycleState.detached') {
@@ -30,14 +39,9 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  void initFunction() async {
-    readFromDeviceLoop();
-  }
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    initFunction();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Dashboard UI',
@@ -47,7 +51,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Cairo',
         useMaterial3: true,
       ),
-      home: const HomeView(),
+      home: HomeView(),
     );
   }
 }

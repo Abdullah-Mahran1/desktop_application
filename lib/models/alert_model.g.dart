@@ -17,9 +17,8 @@ class AlertModelAdapter extends TypeAdapter<AlertModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return AlertModel(
-      alertIcon: fields[0] as IconData,
       errMsg: fields[1] as String,
-      timeDate: fields[2] as String,
+      dateTime: DateTime.parse(fields[2] as String),
     );
   }
 

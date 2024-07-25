@@ -1,4 +1,4 @@
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
+import 'package:desktop_application/const/constants.dart';
 import 'package:flutter/material.dart';
 
 class DataEntry {
@@ -54,8 +54,8 @@ class DataEntry {
         formattedValue = dateTime.toString();
     }
 
-    debugPrint(
-        'dateTime: $dateTime, graphXView: $graphXView, formattedValue: $formattedValue');
+    // debugPrint(
+    //     'dateTime: $dateTime, graphXView: $graphXView, formattedValue: $formattedValue');
     return formattedValue;
   }
 

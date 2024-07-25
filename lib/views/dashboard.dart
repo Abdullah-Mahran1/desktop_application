@@ -1,8 +1,11 @@
 import 'package:desktop_application/const/constants.dart';
 import 'package:desktop_application/cubits/ch_selector_cubit.dart';
+import 'package:desktop_application/cubits/device_connection_cubit.dart';
 import 'package:desktop_application/data_handling/graph_data_processing.dart';
+import 'package:desktop_application/data_handling/server_communication.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:desktop_application/widgets/ch_selector_text_button.dart';
+import 'package:desktop_application/widgets/retry_connection_widget.dart';
 import 'package:desktop_application/widgets/sf_line_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,12 +58,19 @@ class _MyDashboardState extends State<MyDashboard> {
                 return Center(child: Text('Error: ${snapshot.error}'));
               } else {
                 debugPrint('snapShot loaded successfully');
-                return SfLineChart(
-                  chartData: snapshot.data!,
-                  // context: context,
-                  // flSpots: snapshot.data!,
-                  // graphXView: context.read<SettingsCubit>().state.graphXView,
-                );
+                if (snapshot.data!.length > 1) {
+                  return SfChart(
+                    chartData: snapshot.data!,
+                    // context: context,
+                    // flSpots: snapshot.data!,
+                    // graphXView: context.read<SettingsCubit>().state.graphXView,
+                  );
+                } else {
+                  return const Center(
+                      child: Text(
+                          '\n\nNo Data is saved in the provided timeSpan, \n In settings, change the starting dateTime and the Graph Time Scale') /*CircularProgressIndicator()*/);
+                  ;
+                }
               }
             },
           ),
@@ -74,6 +84,9 @@ class ChSelectorPanel extends StatelessWidget {
   const ChSelectorPanel({
     super.key,
   });
+  void initFunction(BuildContext context) async {
+    readFromDeviceLoop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +95,18 @@ class ChSelectorPanel extends StatelessWidget {
             color: const Color(secondBackgroundColor),
             border: Border.all(color: Colors.black.withOpacity(0.2)),
             borderRadius: BorderRadius.circular(8)),
-        child: BlocProvider<ChSelectorCubit>(
-          create: (context) => ChSelectorCubit(),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<ChSelectorCubit>(
+              create: (context) => ChSelectorCubit(),
+            ),
+            BlocProvider(
+              create: (context) => DeviceConnectionCubit(),
+            ),
+          ],
           child: BlocBuilder<ChSelectorCubit, ChSelectorState>(
             builder: (context, state) {
+              initFunction(context);
               return Row(children: [
                 const Padding(
                   padding: EdgeInsets.symmetric(
@@ -104,18 +125,21 @@ class ChSelectorPanel extends StatelessWidget {
                     index: 1,
                     isSelected: (BlocProvider.of<ChSelectorCubit>(context)
                         .selectedChannels[1])),
-                ChSelectorTextButton(
-                  color: const Color(ch2Color),
-                  index: 2,
-                  isSelected: (BlocProvider.of<ChSelectorCubit>(context)
-                      .selectedChannels[2]),
-                ),
-                ChSelectorTextButton(
-                  color: const Color(ch3Color),
-                  index: 3,
-                  isSelected: (BlocProvider.of<ChSelectorCubit>(context)
-                      .selectedChannels[3]),
-                ),
+                // ChSelectorTextButton(
+                //   color: const Color(ch2Color),
+                //   index: 2,
+                //   isSelected: (BlocProvider.of<ChSelectorCubit>(context)
+                //       .selectedChannels[2]),
+                // ),
+                // ChSelectorTextButton(
+                //   color: const Color(ch3Color),
+                //   index: 3,
+                //   isSelected: (BlocProvider.of<ChSelectorCubit>(context)
+                //       .selectedChannels[3]),
+                // ),
+                RetryConnectionButton(() {
+                  readFromDeviceLoop(context);
+                }),
                 const SizedBox(
                   width: defaultPadding / 2,
                 )

@@ -1,5 +1,4 @@
 import 'package:desktop_application/const/constants.dart';
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
 import 'package:desktop_application/cubits/settings_cubit/side_buttons_cubit.dart';
 import 'package:desktop_application/views/alerts_section.dart';
 import 'package:desktop_application/views/dashboard.dart';
@@ -7,9 +6,10 @@ import 'package:desktop_application/views/settings_view.dart';
 import 'package:desktop_application/widgets/side_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+  HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +17,6 @@ class HomeView extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => SideButtonsCubit(),
-        ),
-        BlocProvider(
-          create: (context) => SettingsCubit(),
         ),
       ],
       child: Scaffold(
@@ -38,7 +35,7 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
                 ...context.read<SideButtonsCubit>().isSettings
-                    ? [const SettingsView()]
+                    ? [SettingsView()]
                     : [
                         const MyDashboard(),
                         Expanded(

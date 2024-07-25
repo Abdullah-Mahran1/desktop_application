@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:csv/csv.dart';
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
+import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,7 +30,9 @@ Future<bool> saveToCsv(List<DataEntry>? dataEntries) async {
     List<List> csvData;
     if (file.existsSync()) {
       csvData = const CsvToListConverter().convert(await file.readAsString());
+      debugPrint('csv - saving to existing: ${file.path}');
     } else {
+      debugPrint('csv - saving to newly-created: ${file.path}');
       csvData = <List<dynamic>>[];
       csvData.add([
         ['TimeStamp', 'min', 'max', 'avg', 'peak2peak']
@@ -51,6 +54,7 @@ Future<bool> saveToCsv(List<DataEntry>? dataEntries) async {
 Future<List<DataEntry>> loadFromCsv(String month,
     {required BuildContext context}) async {
   try {
+    debugPrint('csv - loading from $month');
     var file = File(month);
     if (!file.existsSync()) {
       debugPrint('File does not exist: ${file.path}, loadFromCsv() error');
@@ -79,9 +83,10 @@ Future<List<DataEntry>> loadFromCsv(String month,
 
     debugPrint('Loaded ${dataEntries.length} entries from CSV');
     serverData.addAll(dataEntries);
-    return removeExcessData(
-            dataEntries: dataEntries, doNullIfLess: false, context: context) ??
-        [];
+    return dataEntries;
+    // return removeExcessData(
+    //         dataEntries: dataEntries, doNullIfLess: false, context: context) ??
+    //     [];
   } catch (e) {
     debugPrint('Error reading CSV: ${e.toString()}');
     return [];
@@ -96,7 +101,8 @@ List<DataEntry>? removeExcessData(
 
   int requiredValue;
   Duration requiredDuration;
-  GraphXView currentXView = context.read<SettingsCubit>().state.graphXView;
+  GraphXView currentXView =
+      GraphXView.values.byName(DataSingleton().xView ?? 'MINUTE');
 
   switch (currentXView) {
     case GraphXView.MINUTE:

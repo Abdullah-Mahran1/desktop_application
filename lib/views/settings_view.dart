@@ -1,7 +1,10 @@
+import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
 import 'package:desktop_application/cubits/ch_selector_cubit.dart';
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
+import 'package:desktop_application/widgets/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -11,14 +14,54 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  String graphTimeScale = GraphXView.MINUTE.toString();
-  double powerRange = 40; // Starting at middle value
-  Map<String, Map<String, dynamic>> channelThresholds = {
-    'Ch0': {'operator': '>=', 'value': 3.7},
-    'Ch1': {'operator': '<', 'value': 3.7},
-    'Ch2': {'operator': '>=', 'value': 3.7},
-    'Ch3': {'operator': '>=', 'value': 3.7},
-  };
+  late SharedPreferences settings;
+  bool isSettingsLoaded = false;
+
+  String? graphTimeScale;
+  String? startingDateTime;
+  bool isLiveGraph = false;
+
+  Map<String, double> chAlerts = DataSingleton().chAlerts;
+  final snackBar = SnackBar(
+      content: const Text('Settings saved'),
+      duration: const Duration(seconds: 3),
+      backgroundColor: Colors.grey[800],
+      behavior: SnackBarBehavior.floating,
+      elevation: 6.0,
+      margin: const EdgeInsets.only(
+        bottom: 24.0,
+        left: 24.0,
+        right: 24.0,
+      ));
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    settings = await SharedPreferences.getInstance();
+    setState(() {
+      isSettingsLoaded = true;
+      graphTimeScale = settings.getString('xView');
+      startingDateTime = settings.getString('startingDateTime');
+      isLiveGraph = settings.getBool('isLiveGraph') ?? false;
+      for (String key in chAlerts.keys) {
+        chAlerts[key] = settings.getDouble(key) ?? 1.0;
+      }
+    });
+  }
+
+  void _toggleLiveGraph(bool value) {
+    setState(() {
+      isLiveGraph = value;
+      if (!isLiveGraph) {
+        graphTimeScale = null;
+        startingDateTime = null;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +72,26 @@ class _SettingsViewState extends State<SettingsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildGraphSettings()),
-                const SizedBox(width: 24),
-                Expanded(child: _buildChannelThresholds()),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSaveButton(),
+            if (!isSettingsLoaded)
+              const Center(
+                child: Text('Loading settings...'),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildGraphSettings()),
+                      const SizedBox(width: 24),
+                      Expanded(child: _buildChannelThresholds()),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSaveButton(),
+                ],
+              ),
           ],
         ),
       ),
@@ -55,48 +108,48 @@ class _SettingsViewState extends State<SettingsView> {
             const Text('Graph Settings',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Graph Time Scale',
-                  border: OutlineInputBorder(),
-                ),
-                value: graphTimeScale,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    graphTimeScale = newValue!;
-                  });
-                },
-                items: GraphXView.values.map((view) {
-                  return DropdownMenuItem<String>(
-                    value: view.toString(),
-                    child: Text(view.name),
-                  );
-                }).toList()),
-            const SizedBox(height: 8),
-            const Text('How much time should the graph show?',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            SwitchListTile(
+              title: const Text('Live Graph'),
+              value: isLiveGraph,
+              onChanged: _toggleLiveGraph,
+            ),
             const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Graph Time Scale',
+                border: OutlineInputBorder(),
+              ),
+              value: graphTimeScale,
+              onChanged: isLiveGraph
+                  ? null
+                  : (String? newValue) {
+                      setState(() {
+                        graphTimeScale = newValue!;
+                      });
+                    },
+              items: GraphXView.values.map((view) {
+                return DropdownMenuItem<String>(
+                  value: view.name,
+                  child: Text(view.name),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: defaultPadding),
             const Text('Power range'),
-            Slider(
-              value: powerRange,
-              min: 0,
-              max: 80,
-              divisions: 80,
-              label: powerRange.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  powerRange = value;
-                });
-              },
+            const SizedBox(height: defaultPadding),
+            DateTimePickerWidget(
+              initialDateTime: startingDateTime != null
+                  ? DateTime.parse(startingDateTime!)
+                  : null,
+              onDateTimeSelected: isLiveGraph
+                  ? (dateTime) {}
+                  : (dateTime) {
+                      setState(() {
+                        startingDateTime = dateTime.toString();
+                      });
+                    },
             ),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('0 dB', style: TextStyle(fontSize: 12)),
-                Text('80 dB', style: TextStyle(fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: defaultPadding),
             const Text('How much power should the graph show?',
                 style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
@@ -115,8 +168,9 @@ class _SettingsViewState extends State<SettingsView> {
             const Text('Channels Threshold',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            ...channelThresholds.entries.map(
+            ...chAlerts.entries.map(
                 (entry) => _buildChannelThresholdRow(entry.key, entry.value)),
+            const SizedBox(height: 8),
             const Text(
                 'Define the values that upon exceeding, you will get an alert',
                 style: TextStyle(fontSize: 12, color: Colors.grey)),
@@ -126,42 +180,24 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildChannelThresholdRow(
-      String channel, Map<String, dynamic> threshold) {
+  Widget _buildChannelThresholdRow(String channel, double threshold) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          SizedBox(width: 40, child: Text(channel)),
-          const SizedBox(width: 8),
-          DropdownButton<String>(
-            value: threshold['operator'],
-            onChanged: (String? newValue) {
-              setState(() {
-                channelThresholds[channel]!['operator'] = newValue!;
-              });
-            },
-            items: <String>['>', '<', '=', '>=', '<=']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
+          SizedBox(width: 40, child: Text(channel, softWrap: true)),
           const SizedBox(width: 8),
           Expanded(
             child: TextFormField(
-              initialValue: threshold['value'].toString(),
+              initialValue: threshold.toString(),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                suffix: Text('mV'),
+                suffix: Text('V'),
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
                 setState(() {
-                  channelThresholds[channel]!['value'] =
-                      double.tryParse(value) ?? threshold['value'];
+                  chAlerts[channel] = double.tryParse(value) ?? threshold;
                 });
               },
             ),
@@ -176,31 +212,33 @@ class _SettingsViewState extends State<SettingsView> {
       alignment: Alignment.bottomLeft,
       child: ElevatedButton(
         onPressed: _saveSettings,
-        child: const Text('Save Settings'),
+        child: const Text('Save Settings',
+            style: TextStyle(color: Color(highlightColor))),
       ),
     );
   }
 
-  void _saveSettings() {
-    // Implement your save logic here
+  Future<void> _saveSettings() async {
+    SharedPreferences settings = await SharedPreferences.getInstance();
 
-    debugPrint('Graph Time Scale: $graphTimeScale');
-    BlocProvider.of<SettingsCubit>(context)
-        .updateGraphXView(GraphXView.values.firstWhere(
-      (e) => e.toString().split('.').last == graphTimeScale.toUpperCase(),
-      orElse: () => GraphXView.MINUTE, // Default value if no match is found
-    ));
-    debugPrint('Power Range: $powerRange');
-    BlocProvider.of<SettingsCubit>(context)
-        .updatePowerRange(powerRange - 5, powerRange + 5);
-    debugPrint('Channel Thresholds: $channelThresholds');
-    for (String key in channelThresholds.keys) {
-      BlocProvider.of<SettingsCubit>(context).updateChannelThreshold(
-          int.parse(key[key.length-1]),
-          channelThresholds[key]!['operator'],
-          channelThresholds[key]!['value']);
+    settings.setBool('isLiveGraph', isLiveGraph);
+    if (!isLiveGraph) {
+      debugPrint('Graph Time Scale: $graphTimeScale');
+      if (graphTimeScale != null) {
+        settings.setString('xView', graphTimeScale!);
+      }
+      debugPrint('Starting DateTime: $startingDateTime');
+      if (startingDateTime != null) {
+        settings.setString('startingDateTime', startingDateTime!);
+      } else {
+        settings.remove('startingDateTime');
+      }
     }
-    debugPrint('Settings saved');
-    // You would typically send this data to your state management solution or backend here
+    debugPrint('Channel Thresholds: $chAlerts');
+    for (String key in chAlerts.keys) {
+      settings.setDouble(key, chAlerts[key] ?? 1.0);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

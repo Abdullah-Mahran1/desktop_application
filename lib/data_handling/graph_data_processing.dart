@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:desktop_application/cubits/settings_cubit/settings_cubit.dart';
+import 'package:desktop_application/const/constants.dart';
+import 'package:desktop_application/const/data_singleton.dart';
 import 'package:desktop_application/data_handling/csv_communication.dart';
 import 'package:desktop_application/models/data_entry.dart';
 import 'package:flutter/material.dart';
@@ -9,18 +10,8 @@ import 'package:flutter/widgets.dart';
 
 Future<List<DataEntry>> loadGraphData({required BuildContext context}) async {
   // Open last-created file & returns FlSpots
-  final directory = Directory.current;
-  final files = await directory
-      .list()
-      .where((entity) => entity is File && entity.path.endsWith('.csv'))
-      .toList();
 
-  if (files.isEmpty) return [];
-
-  files.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
-  String lastFileName = files.first.path;
-
-  List<DataEntry> csvData = await loadFromCsv(lastFileName, context: context);
+  List<DataEntry> csvData = await DataSingleton().getDataEntries(context, null);
   debugPrint('data read from CSV');
   // Convert CSV data to FlSpot
 
